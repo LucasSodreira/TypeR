@@ -930,18 +930,21 @@ function _isRectangularShapeES3(shapeData) {
 
   if (polygons && polygons.length > 0) {
     var poly = polygons[0];
-    if (poly.length >= 4 && poly.length <= 8) {
-      var nearEdgeCount = 0;
+    if (poly.length >= 4 && poly.length <= 12) {
+      var cornerPoints = 0;
       for (var i = 0; i < poly.length; i++) {
         var x = poly[i][0];
         var y = poly[i][1];
-        var nearLeft = Math.abs(x - bounds.left) < 8;
-        var nearRight = Math.abs(x - bounds.right) < 8;
-        var nearTop = Math.abs(y - bounds.top) < 8;
-        var nearBottom = Math.abs(y - bounds.bottom) < 8;
-        if (nearLeft || nearRight || nearTop || nearBottom) nearEdgeCount++;
+        var nearLeft = Math.abs(x - bounds.left) < 12;
+        var nearRight = Math.abs(x - bounds.right) < 12;
+        var nearTop = Math.abs(y - bounds.top) < 12;
+        var nearBottom = Math.abs(y - bounds.bottom) < 12;
+        // Point is near a corner if it's near both a vertical and horizontal edge
+        if ((nearLeft || nearRight) && (nearTop || nearBottom)) {
+          cornerPoints++;
+        }
       }
-      if (nearEdgeCount >= poly.length - 1) return true;
+      if (cornerPoints >= 3) return true;
     }
   }
 
@@ -950,9 +953,10 @@ function _isRectangularShapeES3(shapeData) {
   if (rows && rows.length >= 5) {
     var fullWidthRows = 0;
     for (var r = 0; r < rows.length; r++) {
-      if (rows[r].left < 0.08 && rows[r].right > 0.92) fullWidthRows++;
+      if (rows[r].left < 0.12 && rows[r].right > 0.88) fullWidthRows++;
     }
-    if (fullWidthRows / rows.length >= 0.80) return true;
+    // Relax from 0.80 to 0.75 to handle slightly rounded corners or borders better
+    if (fullWidthRows / rows.length >= 0.75) return true;
   }
 
   return false;
@@ -2186,8 +2190,8 @@ function _analyzeMangaBalloonGeometryES3(shapeData) {
 
   for (var k = 0; k < validIndices.length; k++) {
     var idx = validIndices[k];
-    if (Math.abs(lefts[idx] - minLeft) < 0.035) leftFlatCount++;
-    if (Math.abs(rights[idx] - maxRight) < 0.035) rightFlatCount++;
+    if (Math.abs(lefts[idx] - minLeft) < 0.025) leftFlatCount++;
+    if (Math.abs(rights[idx] - maxRight) < 0.025) rightFlatCount++;
   }
 
   var minCutRows = Math.max(5, Math.floor(n * 0.35));
@@ -2197,13 +2201,13 @@ function _analyzeMangaBalloonGeometryES3(shapeData) {
   var leftCutRatio = validIndices.length ? leftFlatCount / validIndices.length : 0;
   var rightCutRatio = validIndices.length ? rightFlatCount / validIndices.length : 0;
 
-  var isLeftCut = hasSubstantialWidth && hasSubstantialValidRows && leftFlatCount >= minCutRows && leftCutRatio >= 0.55 && rightCutRatio < 0.4;
-  var isRightCut = hasSubstantialWidth && hasSubstantialValidRows && rightFlatCount >= minCutRows && rightCutRatio >= 0.55 && leftCutRatio < 0.4;
+  var isLeftCut = hasSubstantialWidth && hasSubstantialValidRows && leftFlatCount >= minCutRows && leftCutRatio >= 0.65 && rightCutRatio < 0.4;
+  var isRightCut = hasSubstantialWidth && hasSubstantialValidRows && rightFlatCount >= minCutRows && rightCutRatio >= 0.65 && leftCutRatio < 0.4;
 
   var topWidth = widths[0] || 0;
   var bottomWidth = widths[n - 1] || 0;
-  var isTopCut = hasSubstantialWidth && topWidth > maxRowWidth * 0.65;
-  var isBottomCut = hasSubstantialWidth && bottomWidth > maxRowWidth * 0.65;
+  var isTopCut = hasSubstantialWidth && topWidth > maxRowWidth * 0.75;
+  var isBottomCut = hasSubstantialWidth && bottomWidth > maxRowWidth * 0.75;
   var isCut = isLeftCut || isRightCut || isTopCut || isBottomCut;
 
   var targetNormX = 0.5;
@@ -2213,10 +2217,10 @@ function _analyzeMangaBalloonGeometryES3(shapeData) {
   var medianMid = sortedMids[Math.floor(sortedMids.length / 2)];
   var visibleMidX = (minLeft + maxRight) / 2;
   if (isLeftCut && !isRightCut) {
-    var cutShift = Math.min(0.12, (maxRight - minLeft) * 0.15);
+    var cutShift = Math.min(0.10, (maxRight - minLeft) * 0.12);
     targetNormX = visualCentroidX * 0.4 + visibleMidX * 0.6 - cutShift;
   } else if (isRightCut && !isLeftCut) {
-    var cutShift = Math.min(0.12, (maxRight - minLeft) * 0.15);
+    var cutShift = Math.min(0.10, (maxRight - minLeft) * 0.12);
     targetNormX = visualCentroidX * 0.4 + visibleMidX * 0.6 + cutShift;
   } else if (isTopCut || isBottomCut) {
     targetNormX = visualCentroidX * 0.6 + medianMid * 0.4;
@@ -2627,7 +2631,7 @@ function _fitPhantomEllipseForSelection(shapeData) {
     }
     var angleCoverage = 2 * Math.PI - maxGap;
 
-    var partialArcEvidence = polygons.length > 0 && angleCoverage < Math.PI * 1.85;
+    var partialArcEvidence = polygons.length > 0 && angleCoverage < Math.PI * 1.5;
     if (
       distFromCenter < maxSpan * 0.8 &&
       aspectRatio <= 3.0 &&
