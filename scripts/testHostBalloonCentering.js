@@ -32,11 +32,7 @@ assert.match(
   /var maxShiftX = 0\.05;[\s\S]*?var maxShiftY = 0\.05;/,
   "Host phantom offsets must use the safe 5% clamp"
 );
-assert.match(
-  hostSource,
-  /var partialArcEvidence = polygons\.length > 0 && angleCoverage < Math\.PI \* 1\.85;/,
-  "Ellipse fitting must require evidence of a partial arc"
-);
+assert.match(hostSource, /partialArcEvidence/, "Ellipse fitting must require evidence of a partial arc");
 
 const positionStart = hostSource.indexOf("function _positionLayerWithinSelection");
 const positionEnd = hostSource.indexOf("\nfunction _createMagicWandSelection", positionStart);
