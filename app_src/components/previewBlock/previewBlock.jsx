@@ -14,7 +14,7 @@ import { getBubbleCacheKey, haveSameLayerSize } from "../../textShapeRTracking";
 import { pasteInSelection, withShortcutHint } from "../../shortcutCommands";
 import { createFontPreviewRegistry, getFontPreviewFamily } from "../../fontPreview";
 import { notePerfRender } from "../../perfDebug";
-import TextShapeRFitPreview from "../textShapeRFitpreview";
+import TextShapeRFitPreview from "../textShapeRFitPreview";
 import BalloonCenteringDebug from "./BalloonCenteringDebug";
 
 let textShapeREnginePromise = null;

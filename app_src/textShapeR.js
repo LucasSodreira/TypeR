@@ -379,13 +379,19 @@ const stripMarkdownForMeasure = (text) => String(text || "")
 
 const visibleLength = (text) => stripMarkdownForMeasure(text).length;
 
+const _charWidths = new Float64Array(65536);
+_charWidths.fill(1);
+_charWidths[0] = 0;
+[32, 160, 9, 10, 13].forEach(c => _charWidths[c] = 0.45);
+"ilI.,;:!|'’".split('').forEach(c => _charWidths[c.charCodeAt(0)] = 0.45);
+"mwMW@#%&".split('').forEach(c => _charWidths[c.charCodeAt(0)] = 1.32);
+for(let i=65; i<=90; i++) _charWidths[i] = 1.12;
+"ÀÂÄÉÈÊËÎÏÔÖÙÛÜ".split('').forEach(c => _charWidths[c.charCodeAt(0)] = 1.12);
+
 const getCharWidth = (char) => {
   if (!char) return 0;
-  if (/\s/.test(char)) return 0.45;
-  if (/[ilI.,;:!|'’]/.test(char)) return 0.45;
-  if (/[mwMW@#%&]/.test(char)) return 1.32;
-  if (/[A-ZÀÂÄÉÈÊËÎÏÔÖÙÛÜ]/.test(char)) return 1.12;
-  return 1;
+  const code = char.charCodeAt(0);
+  return code < 65536 ? _charWidths[code] : 1;
 };
 
 const visibleWidth = (text) => {
